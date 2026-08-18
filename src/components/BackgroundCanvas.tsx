@@ -81,9 +81,9 @@ const SeamlessVideoPlane: React.FC<SeamlessVideoShaderProps> = ({ videoSrc }) =>
       const fadeTime = Math.min(2.5, duration / 3); // 2.5 seconds crossfade window
       const currentTimeA = vA.currentTime;
 
-      // Update texture updates
-      if (textureA) textureA.needsUpdate = true;
-      if (textureB) textureB.needsUpdate = true;
+      // Update texture updates safely only if video has enough data
+      if (textureA && vA && vA.readyState >= 2) textureA.needsUpdate = true;
+      if (textureB && vB && vB.readyState >= 2) textureB.needsUpdate = true;
 
       // Crossfade calculations
       // When vA gets close to duration - fadeTime, trigger vB

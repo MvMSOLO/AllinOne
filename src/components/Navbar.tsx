@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Menu, X, Sparkles, Compass, Timer,
+  Sparkles, Compass, Timer,
   Radio, Disc, Headphones, Heart, Share2, Layers
 } from 'lucide-react';
+import { CustomHamburgerButton } from './CustomHamburgerButton';
 
 interface NavbarProps {
   activeTab: string;
@@ -89,74 +90,136 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span>{ambientPlaying ? 'Nature On' : 'Nature Off'}</span>
           </button>
 
-          {/* Hamburger Menu Trigger */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="p-2.5 rounded-full glass-button text-slate-200 hover:text-white focus:outline-none"
-            aria-label="Toggle Menu"
-          >
-            {isOpen ? <X className="w-5 h-5 text-purple-300" /> : <Menu className="w-5 h-5 text-purple-300" />}
-          </button>
+          {/* Custom Handcrafted Hamburger Menu Trigger */}
+          <CustomHamburgerButton isOpen={isOpen} onClick={() => setIsOpen(!isOpen)} />
         </div>
       </div>
 
-      {/* Hamburger Overlay Dropdown Menu */}
+      {/* Handcrafted Custom Glassmorphic Overlay Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
-            className="absolute top-20 right-4 left-4 md:left-auto md:w-96 glass-panel-glow rounded-3xl p-6 border border-white/20 shadow-2xl z-50 overflow-hidden"
-          >
-            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/10">
-              <span className="text-xs uppercase tracking-widest text-purple-300 font-semibold flex items-center gap-2">
-                <Layers className="w-4 h-4 text-purple-400" /> All-In-One Navigation
-              </span>
-              <span className="text-[10px] bg-purple-500/20 border border-purple-500/30 text-purple-200 px-2 py-0.5 rounded-full font-mono">
-                v2.0
-              </span>
-            </div>
+          <React.Fragment>
+            {/* Backdrop Blur overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsOpen(false)}
+              className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-40"
+            />
 
-            <div className="space-y-2">
-              {menuItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsOpen(false);
-                    }}
-                    className={`w-full flex items-center gap-4 p-3 rounded-2xl text-left transition-all duration-300 ${
-                      isActive
-                        ? 'bg-gradient-to-r from-purple-600/40 to-indigo-600/30 border border-purple-400/40 text-white shadow-lg'
-                        : 'hover:bg-white/10 text-slate-300 hover:text-white border border-transparent'
-                    }`}
-                  >
-                    <div className={`p-2.5 rounded-xl ${isActive ? 'bg-purple-500/30 text-purple-200' : 'bg-white/5 text-slate-400'}`}>
-                      <Icon className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">{item.label}</div>
-                      <div className="text-xs text-slate-400 mt-0.5">{item.description}</div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {/* Bespoke Custom Glass Modal Drawer */}
+            <motion.div
+              initial={{ opacity: 0, y: -24, scale: 0.94 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
+              className="absolute top-24 right-4 left-4 md:left-auto md:w-96 rounded-3xl p-6 bg-slate-950/85 backdrop-blur-2xl border border-purple-500/30 shadow-2xl shadow-purple-950/60 z-50 overflow-hidden"
+            >
+              {/* Handcrafted Ambient Gradient Aura */}
+              <div className="absolute -top-20 -right-20 w-48 h-48 bg-purple-600/30 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-pink-600/20 rounded-full blur-3xl pointer-events-none" />
 
-            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
-              <span className="flex items-center gap-1">
-                <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/30" /> Soft Nostalgia
-              </span>
-              <span className="flex items-center gap-1 text-slate-400 hover:text-slate-200 cursor-pointer">
-                <Share2 className="w-3.5 h-3.5" /> Share Vibe
-              </span>
-            </div>
-          </motion.div>
+              {/* Top Header with Custom Sound Wave Visualizer */}
+              <div className="relative z-10 flex items-center justify-between pb-4 mb-4 border-b border-white/10">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-2.5 h-2.5 rounded-full bg-gradient-to-r from-purple-400 to-pink-400 animate-pulse" />
+                  <span className="text-xs uppercase tracking-widest text-purple-200 font-bold font-mono">
+                    Nostalgia Menu
+                  </span>
+                </div>
+
+                {/* Handcrafted Animated Equalizer Bars */}
+                <div className="flex items-end gap-1 h-4 px-2 py-1 bg-purple-950/50 rounded-lg border border-purple-500/20">
+                  <motion.span
+                    animate={{ height: ['4px', '14px', '6px', '12px', '4px'] }}
+                    transition={{ repeat: Infinity, duration: 1.1, ease: 'easeInOut' }}
+                    className="w-1 bg-purple-400 rounded-full"
+                  />
+                  <motion.span
+                    animate={{ height: ['10px', '4px', '14px', '8px', '10px'] }}
+                    transition={{ repeat: Infinity, duration: 0.9, ease: 'easeInOut' }}
+                    className="w-1 bg-pink-400 rounded-full"
+                  />
+                  <motion.span
+                    animate={{ height: ['6px', '12px', '4px', '14px', '6px'] }}
+                    transition={{ repeat: Infinity, duration: 1.3, ease: 'easeInOut' }}
+                    className="w-1 bg-indigo-400 rounded-full"
+                  />
+                </div>
+              </div>
+
+              {/* Navigation Items List */}
+              <div className="relative z-10 space-y-2.5">
+                {menuItems.map((item, idx) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <motion.button
+                      key={item.id}
+                      initial={{ opacity: 0, x: -15 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 + 0.1, duration: 0.2 }}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsOpen(false);
+                      }}
+                      className={`group w-full relative flex items-center gap-4 p-3.5 rounded-2xl text-left transition-all duration-300 overflow-hidden ${
+                        isActive
+                          ? 'bg-gradient-to-r from-purple-900/60 via-indigo-900/40 to-slate-900/80 border border-purple-400/50 text-white shadow-xl shadow-purple-950/40'
+                          : 'hover:bg-white/10 text-slate-300 hover:text-white border border-white/5'
+                      }`}
+                    >
+                      {/* Active Indicator Bar */}
+                      {isActive && (
+                        <motion.div
+                          layoutId="activeGlowBar"
+                          className="absolute left-0 top-2 bottom-2 w-1.5 bg-gradient-to-b from-purple-400 via-pink-400 to-indigo-400 rounded-r-full shadow-lg shadow-purple-400/80"
+                        />
+                      )}
+
+                      <div
+                        className={`p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 ${
+                          isActive
+                            ? 'bg-purple-500/30 text-purple-200 border border-purple-400/30'
+                            : 'bg-white/5 text-slate-400 border border-white/5 group-hover:text-purple-300'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-semibold text-white flex items-center justify-between">
+                          <span>{item.label}</span>
+                          {isActive && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-purple-500/30 border border-purple-400/40 text-purple-200">
+                              Active
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-slate-400 mt-0.5 truncate">{item.description}</div>
+                      </div>
+                    </motion.button>
+                  );
+                })}
+              </div>
+
+              {/* Handcrafted Custom Menu Footer */}
+              <div className="relative z-10 mt-6 pt-4 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                <div className="flex items-center gap-1.5">
+                  <Heart className="w-3.5 h-3.5 text-pink-400 fill-pink-400/40 animate-pulse" />
+                  <span className="text-slate-300 font-medium text-[11px]">Crafted for Nostalgia</span>
+                </div>
+                <div
+                  onClick={() => alert('Vibe copied! Spread the music nostalgia.')}
+                  className="flex items-center gap-1.5 text-purple-300 hover:text-purple-100 cursor-pointer transition-colors text-[11px] font-mono bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20"
+                >
+                  <Share2 className="w-3 h-3" />
+                  <span>Share Vibe</span>
+                </div>
+              </div>
+            </motion.div>
+          </React.Fragment>
         )}
       </AnimatePresence>
     </header>
