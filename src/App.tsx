@@ -3,6 +3,7 @@ import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { Navbar } from './components/Navbar';
 import { MainView } from './components/MainView';
 import { MusicPlayer } from './components/MusicPlayer';
+import { Footer } from './components/Footer';
 import type { Track } from './data/musicData';
 import { TOP_10_NOSTALGIC_TRACKS } from './data/musicData';
 import { ambientEngine } from './utils/ambientAudio';
@@ -49,7 +50,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen text-slate-100 relative font-sans selection:bg-purple-500 selection:text-white">
+    <div className="min-h-screen text-slate-100 relative font-sans selection:bg-purple-500 selection:text-white flex flex-col justify-between">
       {/* Three.js 3D Background Canvas with Seamless Video Crossfade Shader */}
       <BackgroundCanvas />
 
@@ -68,6 +69,13 @@ export const App: React.FC = () => {
         isPlaying={isPlaying}
         onSelectTrack={handleSelectTrack}
         onTogglePlay={handleTogglePlay}
+      />
+
+      {/* Handcrafted Special Footer */}
+      <Footer
+        setActiveTab={setActiveTab}
+        ambientPlaying={ambientPlaying}
+        toggleAmbient={handleToggleAmbient}
       />
 
       {/* Floating Modern Audio Player Bar */}
