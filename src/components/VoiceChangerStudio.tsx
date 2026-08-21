@@ -27,6 +27,7 @@ export const VoiceChangerStudio: React.FC = () => {
   const [customPitch, setCustomPitch] = useState<number>(FEMALE_VOICE_PRESETS[0].pitchSemiTones);
   const [customReverb, setCustomReverb] = useState<number>(FEMALE_VOICE_PRESETS[0].reverbLevel);
   const [customSpeed, setCustomSpeed] = useState<number>(FEMALE_VOICE_PRESETS[0].speedRate);
+  const [customHighShelfGain, setCustomHighShelfGain] = useState<number>(FEMALE_VOICE_PRESETS[0].highShelfGain || 5);
   const [selectedBeatId, setSelectedBeatId] = useState<string>('none');
   const [beatVolume, setBeatVolume] = useState<number>(0.35);
 
@@ -51,16 +52,17 @@ export const VoiceChangerStudio: React.FC = () => {
     setCustomPitch(selectedPreset.pitchSemiTones);
     setCustomReverb(selectedPreset.reverbLevel);
     setCustomSpeed(selectedPreset.speedRate);
+    setCustomHighShelfGain(selectedPreset.highShelfGain || 5);
   }, [selectedPreset]);
 
-  // Process Audio whenever raw buffer, selected preset, custom pitch, custom reverb, or beat changes (with Debounce)
+  // Process Audio whenever raw buffer, selected preset, custom pitch, custom reverb, high-shelf gain, or beat changes (Strict 300ms Debounce)
   useEffect(() => {
     if (!audioRawBuffer) return;
     const timer = setTimeout(() => {
       processCurrentAudio();
-    }, 250);
+    }, 300);
     return () => clearTimeout(timer);
-  }, [audioRawBuffer, selectedPreset, customPitch, customReverb, customSpeed, selectedBeatId, beatVolume]);
+  }, [audioRawBuffer, selectedPreset, customPitch, customReverb, customSpeed, customHighShelfGain, selectedBeatId, beatVolume]);
 
   // Load Demo Audio Sample
   const handleLoadDemoAudio = async () => {
@@ -94,7 +96,7 @@ export const VoiceChangerStudio: React.FC = () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-      // Determine best supported MIME type across browsers
+      // Determine best supported MIME type across browsers prioritizing opus webm
       const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
       const supportedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
 
@@ -110,7 +112,7 @@ export const VoiceChangerStudio: React.FC = () => {
 
       mediaRecorder.onstop = async () => {
         try {
-          const audioBlob = new Blob(audioChunksRef.current, { type: supportedMime || 'audio/webm' });
+          const audioBlob = new Blob(audioChunksRef.current, { type: supportedMime || 'audio/webm;codecs=opus' });
           const arrayBuffer = await audioBlob.arrayBuffer();
           const ctx = voiceEngine.getAudioContext();
           const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -163,7 +165,7 @@ export const VoiceChangerStudio: React.FC = () => {
     }
   };
 
-  // Process raw buffer through voice engine DSP
+  // Process raw buffer through voice engine DSP & Realism Filters
   const processCurrentAudio = async () => {
     if (!audioRawBuffer) return;
     setIsProcessing(true);
@@ -179,7 +181,8 @@ export const VoiceChangerStudio: React.FC = () => {
         ...selectedPreset,
         pitchSemiTones: customPitch,
         reverbLevel: customReverb,
-        speedRate: customSpeed
+        speedRate: customSpeed,
+        highShelfGain: customHighShelfGain
       };
 
       const resultBuffer = await voiceEngine.processAudio(
@@ -187,7 +190,8 @@ export const VoiceChangerStudio: React.FC = () => {
         overridePreset,
         customPitch,
         beatBuffer,
-        beatVolume
+        beatVolume,
+        customHighShelfGain
       );
 
       setProcessedBuffer(resultBuffer);
@@ -296,13 +300,13 @@ export const VoiceChangerStudio: React.FC = () => {
       {/* Top Banner Header */}
       <div className="text-center max-w-3xl mx-auto space-y-3">
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-purple-500/20 border border-purple-400/30 text-purple-200 text-xs font-mono uppercase tracking-widest shadow-lg">
-          <Zap className="w-4 h-4 text-amber-300 animate-bounce" /> 40 Pro Voice Changer & Song Studio
+          <Zap className="w-4 h-4 text-amber-300 animate-bounce" /> 40 Pro Realism Voice Changer Studio
         </div>
         <h1 className="text-3xl md:text-5xl font-extrabold text-white tracking-tight leading-tight">
-          Transform Your Voice into <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">20 Female Voices & 20 FX</span>
+          Transform Your Voice into <span className="bg-gradient-to-r from-purple-300 via-pink-300 to-indigo-300 bg-clip-text text-transparent">Frighteningly Realistic Female Voices</span>
         </h1>
         <p className="text-slate-300 text-sm md:text-base leading-relaxed">
-          Record live mic, upload dictaphone audio, apply female / cyberpunk / anime voice filters, generate backing beats, and export directly as Telegram Voice Notes or WAV songs.
+          Hybrid Web Audio API + Cloud AI Architecture with Tone.js Low-Cut filter, High-Shelf Brightness, and Micro-Room Reverb for 0% suspicion of an edited voice.
         </p>
       </div>
 
@@ -317,7 +321,7 @@ export const VoiceChangerStudio: React.FC = () => {
                 <Radio className="w-5 h-5 text-purple-400" /> 1. Select Audio Input
               </h3>
               <span className="text-[11px] font-mono text-purple-300 bg-purple-500/10 px-2.5 py-1 rounded-full border border-purple-500/20">
-                High Definition 48kHz
+                Opus 48kHz HD
               </span>
             </div>
 
@@ -382,7 +386,7 @@ export const VoiceChangerStudio: React.FC = () => {
 
                 <div>
                   <p className="text-sm font-semibold text-white">
-                    {isRecording ? 'Recording Voice...' : 'Click to Start Speak'}
+                    {isRecording ? 'Recording Voice in Opus Codec...' : 'Click to Speak'}
                   </p>
                   <p className="text-xs text-slate-400 font-mono mt-1">
                     {isRecording ? `00:${String(recordingTime).padStart(2, '0')}` : 'Say anything to convert into female voice'}
@@ -490,13 +494,14 @@ export const VoiceChangerStudio: React.FC = () => {
           <div className="glass-panel p-6 rounded-3xl border border-purple-500/30 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-white/10">
               <h3 className="font-bold text-white text-sm flex items-center gap-2">
-                <Sliders className="w-4 h-4 text-purple-400" /> Studio Voice Fine-Tuner
+                <Sliders className="w-4 h-4 text-purple-400" /> Studio Realism Fine-Tuner
               </h3>
               <button
                 onClick={() => {
                   setCustomPitch(selectedPreset.pitchSemiTones);
                   setCustomReverb(selectedPreset.reverbLevel);
                   setCustomSpeed(selectedPreset.speedRate);
+                  setCustomHighShelfGain(selectedPreset.highShelfGain || 5);
                 }}
                 className="text-[10px] text-purple-300 hover:text-white flex items-center gap-1"
               >
@@ -505,10 +510,10 @@ export const VoiceChangerStudio: React.FC = () => {
             </div>
 
             <div className="space-y-3 text-xs">
-              {/* Pitch Shift Slider */}
+              {/* Pitch Fine-Tune Slider */}
               <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-1.5">
                 <div className="flex justify-between text-slate-300 font-medium">
-                  <span>Pitch Shift (Semitones)</span>
+                  <span>Pitch Shift (Granular)</span>
                   <span className="font-mono text-purple-300">
                     {customPitch > 0 ? `+${customPitch}` : customPitch} st
                   </span>
@@ -524,10 +529,27 @@ export const VoiceChangerStudio: React.FC = () => {
                 />
               </div>
 
+              {/* High-Shelf Gain (Sibilance/Air Boost at 4000Hz) Slider */}
+              <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-1.5">
+                <div className="flex justify-between text-slate-300 font-medium">
+                  <span>Tone.js High-Shelf Air Gain (4000Hz)</span>
+                  <span className="font-mono text-amber-300">+{customHighShelfGain} dB</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="12"
+                  step="0.5"
+                  value={customHighShelfGain}
+                  onChange={(e) => setCustomHighShelfGain(parseFloat(e.target.value))}
+                  className="w-full accent-amber-500 bg-slate-800 rounded-lg h-1.5 cursor-pointer"
+                />
+              </div>
+
               {/* Reverb Level Slider */}
               <div className="bg-white/5 p-3 rounded-xl border border-white/5 space-y-1.5">
                 <div className="flex justify-between text-slate-300 font-medium">
-                  <span>Concert Hall Reverb</span>
+                  <span>Micro-Room Reverb Mix</span>
                   <span className="font-mono text-pink-300">{Math.round(customReverb * 100)}%</span>
                 </div>
                 <input
@@ -585,7 +607,7 @@ export const VoiceChangerStudio: React.FC = () => {
               )}
               {isProcessing && (
                 <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center text-xs text-purple-300 font-mono gap-2">
-                  <RefreshCw className="w-4 h-4 animate-spin" /> Processing Voice Modulation...
+                  <RefreshCw className="w-4 h-4 animate-spin" /> Processing AI Voice Realism Filter...
                 </div>
               )}
             </div>
@@ -707,7 +729,7 @@ export const VoiceChangerStudio: React.FC = () => {
                       </p>
                       <div className="flex items-center gap-2 mt-2 font-mono text-[9px] text-purple-300">
                         <span>Pitch: {preset.pitchSemiTones > 0 ? `+${preset.pitchSemiTones}` : preset.pitchSemiTones}st</span>
-                        <span>Reverb: {Math.round(preset.reverbLevel * 100)}%</span>
+                        <span>Air: +{preset.highShelfGain || 5}dB</span>
                       </div>
                     </div>
                   </motion.div>
