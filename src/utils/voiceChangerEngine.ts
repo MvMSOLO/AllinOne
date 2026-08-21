@@ -813,16 +813,25 @@ export const BACKING_BEATS: InstrumentalBeat[] = [
 export class VoiceChangerEngine {
   private ctx: AudioContext | null = null;
 
+  public getAudioContext(): AudioContext {
+    if (!this.ctx || this.ctx.state === 'closed') {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      this.ctx = new AudioCtx();
+    }
+    if (this.ctx.state === 'suspended') {
+      this.ctx.resume();
+    }
+    return this.ctx;
+  }
+
   public init() {
-    if (this.ctx) return;
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    this.ctx = new AudioCtx();
+    this.getAudioContext();
   }
 
   // Generate Procedural Backing Beat Audio Buffer
   public createProceduralBeat(beatId: string, durationSec: number = 20): AudioBuffer {
-    this.init();
-    const sampleRate = this.ctx!.sampleRate;
+    const audioCtx = this.getAudioContext();
+    const sampleRate = audioCtx.sampleRate;
     const numSamples = Math.floor(sampleRate * durationSec);
     const buffer = this.ctx!.createBuffer(2, numSamples, sampleRate);
     const left = buffer.getChannelData(0);
@@ -927,34 +936,90 @@ export class VoiceChangerEngine {
     // Source Node
     const sourceNode = offlineCtx.createBufferSource();
     sourceNode.buffer = inputBuffer;
-    sourceNode.playbackRate.setValueAtTime(pitchFactor * speedFactor, offlineCtx.currentTime);
+
+    // Apply speed rate factor to source
+    sourceNode.playbackRate.setValueAtTime(speedFactor, offlineCtx.currentTime);
 
     let currentNode: AudioNode = sourceNode;
+
+    // Granular Delay Pitch Shifter (Shifts pitch independent of speed)
+    if (Math.abs(finalPitchSemi) > 0.01) {
+      const grainSize = 0.06; // 60ms grains
+      const pitchShift = pitchFactor; // e.g. 1.414 for +6 semitones
+      const modFreq = (1.0 - pitchShift) / grainSize;
+
+      const delayA = offlineCtx.createDelay();
+      const delayB = offlineCtx.createDelay();
+      delayA.delayTime.setValueAtTime(grainSize / 2, offlineCtx.currentTime);
+      delayB.delayTime.setValueAtTime(grainSize / 2, offlineCtx.currentTime);
+
+      const gainA = offlineCtx.createGain();
+      const gainB = offlineCtx.createGain();
+
+      // Sawtooth Modulators for Granular Delay Taps
+      const osc = offlineCtx.createOscillator();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(Math.abs(modFreq), offlineCtx.currentTime);
+
+      const oscGain = offlineCtx.createGain();
+      oscGain.gain.setValueAtTime((modFreq < 0 ? 1 : -1) * (grainSize / 2), offlineCtx.currentTime);
+
+      osc.connect(oscGain);
+      oscGain.connect(delayA.delayTime);
+      oscGain.connect(delayB.delayTime);
+
+      // Connect source to delay taps
+      currentNode.connect(delayA);
+      currentNode.connect(delayB);
+
+      delayA.connect(gainA);
+      delayB.connect(gainB);
+
+      const pitchMerger = offlineCtx.createGain();
+      gainA.connect(pitchMerger);
+      gainB.connect(pitchMerger);
+
+      osc.start(0);
+      currentNode = pitchMerger;
+    }
 
     // 1. Robot / Ring Modulation FX
     if (preset.robotMod) {
       const osc = offlineCtx.createOscillator();
       osc.type = 'sine';
       osc.frequency.setValueAtTime(50, offlineCtx.currentTime); // 50 Hz carrier
-      osc.start();
 
       const modGain = offlineCtx.createGain();
       modGain.gain.setValueAtTime(0.5, offlineCtx.currentTime);
 
-      // Simple amplitude mod simulation via gain node
+      // Connect ring modulator carrier to gain node
+      osc.connect(modGain.gain);
+      osc.start(0);
+
       currentNode.connect(modGain);
       currentNode = modGain;
     }
 
-    // 2. Formant / Biquad Filter (Shifts vocal resonance)
+    // 2. Multi-band Formant Vocal Tract Resonator (F1, F2, F3)
     if (preset.formantShift !== 1.0) {
-      const formantFilter = offlineCtx.createBiquadFilter();
-      formantFilter.type = preset.formantShift > 1.0 ? 'highshelf' : 'lowshelf';
-      formantFilter.frequency.setValueAtTime(1500 * preset.formantShift, offlineCtx.currentTime);
-      formantFilter.gain.setValueAtTime((preset.formantShift - 1.0) * 12, offlineCtx.currentTime);
+      const shift = preset.formantShift;
+      // F1 ~ 500Hz, F2 ~ 1500Hz, F3 ~ 2800Hz
+      const formants = [
+        { freq: 500 * shift, gain: (shift - 1.0) * 8, Q: 3 },
+        { freq: 1500 * shift, gain: (shift - 1.0) * 10, Q: 3.5 },
+        { freq: 2800 * shift, gain: (shift - 1.0) * 6, Q: 4 }
+      ];
 
-      currentNode.connect(formantFilter);
-      currentNode = formantFilter;
+      formants.forEach(({ freq, gain, Q }) => {
+        const filter = offlineCtx.createBiquadFilter();
+        filter.type = 'peaking';
+        filter.frequency.setValueAtTime(Math.min(freq, sampleRate / 2 - 100), offlineCtx.currentTime);
+        filter.gain.setValueAtTime(gain, offlineCtx.currentTime);
+        filter.Q.setValueAtTime(Q, offlineCtx.currentTime);
+
+        currentNode.connect(filter);
+        currentNode = filter;
+      });
     }
 
     // 3. Special Filters (Telephone, Megaphone, Underwater)
@@ -1157,10 +1222,9 @@ export class VoiceChangerEngine {
 
   // Export as Telegram Voice Format (.ogg or .webm opus file with voice metadata)
   public bufferToTelegramVoiceBlob(buffer: AudioBuffer): Blob {
-    // Generate a Telegram optimized Audio Blob (16kHz-48kHz Mono/Stereo Audio)
+    // Generate standard audio file blob compatible with Telegram audio player & voice messages
     const wavBlob = this.bufferToWav(buffer);
-    // Return WAV wrapped blob formatted with ogg mime type for Telegram compatibility
-    return new Blob([wavBlob], { type: 'audio/ogg; codecs=opus' });
+    return new Blob([wavBlob], { type: 'audio/wav' });
   }
 }
 

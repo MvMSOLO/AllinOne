@@ -45,7 +45,6 @@ export const VoiceChangerStudio: React.FC = () => {
   const timerIntervalRef = useRef<any>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const activeSourceNodeRef = useRef<AudioBufferSourceNode | null>(null);
-  const audioCtxRef = useRef<AudioContext | null>(null);
 
   // Update fine tuning sliders when preset changes
   useEffect(() => {
@@ -54,17 +53,20 @@ export const VoiceChangerStudio: React.FC = () => {
     setCustomSpeed(selectedPreset.speedRate);
   }, [selectedPreset]);
 
-  // Process Audio whenever raw buffer, selected preset, custom pitch, custom reverb, or beat changes
+  // Process Audio whenever raw buffer, selected preset, custom pitch, custom reverb, or beat changes (with Debounce)
   useEffect(() => {
     if (!audioRawBuffer) return;
-    processCurrentAudio();
+    const timer = setTimeout(() => {
+      processCurrentAudio();
+    }, 250);
+    return () => clearTimeout(timer);
   }, [audioRawBuffer, selectedPreset, customPitch, customReverb, customSpeed, selectedBeatId, beatVolume]);
 
   // Load Demo Audio Sample
   const handleLoadDemoAudio = async () => {
     try {
       setIsProcessing(true);
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = voiceEngine.getAudioContext();
       const sampleRate = ctx.sampleRate;
       const duration = 4;
       const buffer = ctx.createBuffer(1, sampleRate * duration, sampleRate);
@@ -91,7 +93,12 @@ export const VoiceChangerStudio: React.FC = () => {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+
+      // Determine best supported MIME type across browsers
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'];
+      const supportedMime = mimeTypes.find(type => MediaRecorder.isTypeSupported(type)) || '';
+
+      const mediaRecorder = supportedMime ? new MediaRecorder(stream, { mimeType: supportedMime }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -102,13 +109,18 @@ export const VoiceChangerStudio: React.FC = () => {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const arrayBuffer = await audioBlob.arrayBuffer();
-        const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-        const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
-        setAudioRawBuffer(decodedBuffer);
-        setUploadedFileName('Mic Voice Recording');
-        stream.getTracks().forEach((track) => track.stop());
+        try {
+          const audioBlob = new Blob(audioChunksRef.current, { type: supportedMime || 'audio/webm' });
+          const arrayBuffer = await audioBlob.arrayBuffer();
+          const ctx = voiceEngine.getAudioContext();
+          const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
+          setAudioRawBuffer(decodedBuffer);
+          setUploadedFileName('Mic Voice Recording');
+        } catch (err) {
+          alert('Error decoding recorded audio: ' + err);
+        } finally {
+          stream.getTracks().forEach((track) => track.stop());
+        }
       };
 
       mediaRecorder.start();
@@ -141,7 +153,7 @@ export const VoiceChangerStudio: React.FC = () => {
       setIsProcessing(true);
       setUploadedFileName(file.name);
       const arrayBuffer = await file.arrayBuffer();
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      const ctx = voiceEngine.getAudioContext();
       const decodedBuffer = await ctx.decodeAudioData(arrayBuffer);
       setAudioRawBuffer(decodedBuffer);
       setIsProcessing(false);
@@ -193,13 +205,16 @@ export const VoiceChangerStudio: React.FC = () => {
 
     if (isPlayingProcessed) {
       if (activeSourceNodeRef.current) {
-        activeSourceNodeRef.current.stop();
+        try {
+          activeSourceNodeRef.current.stop();
+        } catch {
+          // ignore if already stopped
+        }
         activeSourceNodeRef.current = null;
       }
       setIsPlayingProcessed(false);
     } else {
-      const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-      audioCtxRef.current = ctx;
+      const ctx = voiceEngine.getAudioContext();
       const source = ctx.createBufferSource();
       source.buffer = processedBuffer;
       source.connect(ctx.destination);
@@ -266,7 +281,7 @@ export const VoiceChangerStudio: React.FC = () => {
   const handleDownloadTelegramVoice = () => {
     if (!processedBuffer) return;
     const tgBlob = voiceEngine.bufferToTelegramVoiceBlob(processedBuffer);
-    downloadBlob(tgBlob, `${selectedPreset.id}_telegram_voice.ogg`);
+    downloadBlob(tgBlob, `${selectedPreset.id}_telegram_voice.wav`);
   };
 
   const currentPresetList =
