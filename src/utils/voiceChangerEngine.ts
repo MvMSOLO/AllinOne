@@ -1,5 +1,7 @@
-// Web Audio API Advanced Voice Processing, Modulation & FX Engine
-// Supporting 20 Female Voice Presets, 20 Special FX Presets, Live Mic, Beat Mixer & Telegram Voice Export.
+import * as Tone from 'tone';
+
+// Web Audio API + Fish Audio AI Hybrid Voice Processing Engine
+// Supporting 20 Female Voice Presets, 20 Special FX Presets, Tone.js Post-Processing Realism Filter & Telegram Voice Export.
 
 export interface VoicePreset {
   id: string;
@@ -7,26 +9,27 @@ export interface VoicePreset {
   category: 'female' | 'special';
   description: string;
   icon: string;
-  pitchSemiTones: number; // -12 to +12
-  formantShift: number; // 0.5 to 2.0
-  speedRate: number; // 0.5 to 1.5
-  reverbLevel: number; // 0 to 1
-  delayLevel: number; // 0 to 1
-  distortion: number; // 0 to 1
+  pitchSemiTones: number; // -12 to +12 semitones
+  formantShift: number; // 0.5 to 2.0 formant scale
+  speedRate: number; // 0.5 to 1.5 playback speed
+  reverbLevel: number; // 0 to 1 wet mix
+  delayLevel: number; // 0 to 1 wet mix
+  distortion: number; // 0 to 1 drive
   eqBass: number; // -12 to +12 dB
   eqTreble: number; // -12 to +12 dB
   autotune: boolean;
   robotMod: boolean;
   telephoneFilter: boolean;
   underwaterFilter: boolean;
+  highShelfGain?: number; // dB boost at 4000Hz (default +5dB)
 }
 
 export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
   {
     id: 'anime_girl',
-    name: 'Anime Girl ( high-pitched )',
+    name: 'Anime Girl (Sweet Idol)',
     category: 'female',
-    description: 'High pitched, sweet anime idol tone with soft formant shift.',
+    description: 'High pitched, sweet anime idol tone with soft formant shift and bright air.',
     icon: '✨',
     pitchSemiTones: 6,
     formantShift: 1.3,
@@ -39,7 +42,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 6
   },
   {
     id: 'sweet_pop_female',
@@ -58,7 +62,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: true,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'soft_whisper_female',
@@ -77,13 +82,14 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 7
   },
   {
     id: 'deep_boss_female',
     name: 'Deep Female Boss',
     category: 'female',
-    description: 'Confident, sultry, deep executive female tone.',
+    description: 'Confident, sultry, deep executive female tone with warm resonance.',
     icon: '👑',
     pitchSemiTones: 1,
     formantShift: 0.95,
@@ -96,7 +102,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 4
   },
   {
     id: 'cute_chibi',
@@ -106,7 +113,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🎀',
     pitchSemiTones: 7,
     formantShift: 1.4,
-    speedRate: 1.05,
+    speedRate: 1.0,
     reverbLevel: 0.1,
     delayLevel: 0.1,
     distortion: 0,
@@ -115,13 +122,14 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 6
   },
   {
     id: 'cyberpunk_android_girl',
     name: 'Cyberpunk Android Girl',
     category: 'female',
-    description: 'Futuristic synth female AI agent voice with ring modulation.',
+    description: 'Futuristic synth female AI agent voice with subtle ring modulation.',
     icon: '🤖',
     pitchSemiTones: 3,
     formantShift: 1.2,
@@ -134,7 +142,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: true,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'operatic_female',
@@ -153,7 +162,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: true,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'vintage_jazz_female',
@@ -172,7 +182,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: true,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 3
   },
   {
     id: 'gothic_siren',
@@ -182,7 +193,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🦇',
     pitchSemiTones: 2,
     formantShift: 1.1,
-    speedRate: 0.95,
+    speedRate: 1.0,
     reverbLevel: 0.55,
     delayLevel: 0.3,
     distortion: 0,
@@ -191,7 +202,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'kpop_female_idol',
@@ -210,7 +222,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: true,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 6
   },
   {
     id: 'fairy_goddess',
@@ -229,7 +242,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 7
   },
   {
     id: 'radio_hostess',
@@ -248,7 +262,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'energetic_gamer_girl',
@@ -258,7 +273,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🎮',
     pitchSemiTones: 4,
     formantShift: 1.2,
-    speedRate: 1.02,
+    speedRate: 1.0,
     reverbLevel: 0.15,
     delayLevel: 0.05,
     distortion: 0,
@@ -267,7 +282,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 6
   },
   {
     id: 'dreamy_lofi_female',
@@ -277,7 +293,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🌙',
     pitchSemiTones: 2,
     formantShift: 1.1,
-    speedRate: 0.95,
+    speedRate: 1.0,
     reverbLevel: 0.4,
     delayLevel: 0.2,
     distortion: 0.05,
@@ -286,7 +302,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 4
   },
   {
     id: 'vampire_queen',
@@ -296,7 +313,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🍷',
     pitchSemiTones: 1,
     formantShift: 0.98,
-    speedRate: 0.95,
+    speedRate: 1.0,
     reverbLevel: 0.45,
     delayLevel: 0.1,
     distortion: 0,
@@ -305,7 +322,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 4
   },
   {
     id: 'elf_princess',
@@ -324,7 +342,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 6
   },
   {
     id: 'news_anchor_female',
@@ -343,7 +362,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   },
   {
     id: 'soft_asmr_female',
@@ -353,7 +373,7 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     icon: '🎧',
     pitchSemiTones: 1,
     formantShift: 1.08,
-    speedRate: 0.92,
+    speedRate: 1.0,
     reverbLevel: 0.1,
     delayLevel: 0.0,
     distortion: 0,
@@ -362,7 +382,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 8
   },
   {
     id: 'retro_8bit_girl',
@@ -381,7 +402,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: false,
     robotMod: true,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 4
   },
   {
     id: 'chill_rnb_female',
@@ -400,7 +422,8 @@ export const FEMALE_VOICE_PRESETS: VoicePreset[] = [
     autotune: true,
     robotMod: false,
     telephoneFilter: false,
-    underwaterFilter: false
+    underwaterFilter: false,
+    highShelfGain: 5
   }
 ];
 
@@ -432,7 +455,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '👹',
     pitchSemiTones: -7,
     formantShift: 0.7,
-    speedRate: 0.88,
+    speedRate: 1.0,
     reverbLevel: 0.6,
     delayLevel: 0.25,
     distortion: 0.15,
@@ -466,11 +489,11 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     id: 'alvin_chipmunk',
     name: 'Chipmunk Squeak',
     category: 'special',
-    description: 'Ultra fast, high octave chipmunk voice effect.',
+    description: 'High octave chipmunk voice effect with granular pitch shift.',
     icon: '🐿️',
     pitchSemiTones: 8,
     formantShift: 1.5,
-    speedRate: 1.15,
+    speedRate: 1.0,
     reverbLevel: 0.05,
     delayLevel: 0.05,
     distortion: 0,
@@ -489,7 +512,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '🎬',
     pitchSemiTones: -5,
     formantShift: 0.82,
-    speedRate: 0.92,
+    speedRate: 1.0,
     reverbLevel: 0.3,
     delayLevel: 0.1,
     distortion: 0.05,
@@ -565,7 +588,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '🌊',
     pitchSemiTones: -2,
     formantShift: 0.9,
-    speedRate: 0.92,
+    speedRate: 1.0,
     reverbLevel: 0.4,
     delayLevel: 0.15,
     distortion: 0,
@@ -622,7 +645,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '⛰️',
     pitchSemiTones: -2,
     formantShift: 0.95,
-    speedRate: 0.95,
+    speedRate: 1.0,
     reverbLevel: 0.5,
     delayLevel: 0.5,
     distortion: 0,
@@ -641,7 +664,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '😈',
     pitchSemiTones: -9,
     formantShift: 0.6,
-    speedRate: 0.85,
+    speedRate: 1.0,
     reverbLevel: 0.5,
     delayLevel: 0.2,
     distortion: 0.4,
@@ -755,7 +778,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '🚀',
     pitchSemiTones: -1,
     formantShift: 0.95,
-    speedRate: 0.95,
+    speedRate: 1.0,
     reverbLevel: 0.55,
     delayLevel: 0.4,
     distortion: 0.05,
@@ -774,7 +797,7 @@ export const SPECIAL_VOICE_PRESETS: VoicePreset[] = [
     icon: '👻',
     pitchSemiTones: 1,
     formantShift: 1.15,
-    speedRate: 0.9,
+    speedRate: 1.0,
     reverbLevel: 0.7,
     delayLevel: 0.3,
     distortion: 0,
@@ -809,7 +832,88 @@ export const BACKING_BEATS: InstrumentalBeat[] = [
   { id: 'piano_meditation', name: 'Serene Piano Soundscape', genre: 'Ambient', bpm: 70, icon: '✨' }
 ];
 
-// Audio Processing Engine Class
+/*
+ * FISH AUDIO API CONFIGURATION:
+ * Environment variable placeholder for Fish Audio Bearer Token.
+ * Provide token in environment as `REACT_APP_FISH_AUDIO_KEY` or `VITE_FISH_AUDIO_KEY`.
+ * Free API keys can be obtained at https://fish.audio
+ */
+declare const process: { env: { [key: string]: string | undefined } } | undefined;
+
+const getFishAudioKey = (): string => {
+  if (typeof process !== 'undefined' && process?.env?.REACT_APP_FISH_AUDIO_KEY) {
+    return process.env.REACT_APP_FISH_AUDIO_KEY;
+  }
+  if (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_FISH_AUDIO_KEY) {
+    return (import.meta as any).env.VITE_FISH_AUDIO_KEY;
+  }
+  return '';
+};
+
+/**
+ * Time-Domain Granular Overlap-Add (OLA) Pitch Shifter.
+ * Shifts pitch independently of duration without chipmunk speedup or negative delay time errors.
+ */
+function pitchShiftAudioBuffer(
+  ctx: BaseAudioContext,
+  inputBuffer: AudioBuffer,
+  pitchSemiTones: number
+): AudioBuffer {
+  if (Math.abs(pitchSemiTones) < 0.01) return inputBuffer;
+
+  const pitchFactor = Math.pow(2, pitchSemiTones / 12);
+  const numChannels = inputBuffer.numberOfChannels;
+  const sampleRate = inputBuffer.sampleRate;
+  const length = inputBuffer.length;
+
+  const outputBuffer = ctx.createBuffer(numChannels, length, sampleRate);
+
+  const grainSize = 2048;
+  const hopSize = 512; // 75% overlap
+
+  // Pre-calculate Hann window
+  const window = new Float32Array(grainSize);
+  for (let i = 0; i < grainSize; i++) {
+    window[i] = 0.5 * (1 - Math.cos((2 * Math.PI * i) / grainSize));
+  }
+
+  for (let ch = 0; ch < numChannels; ch++) {
+    const inputData = inputBuffer.getChannelData(ch);
+    const outputData = outputBuffer.getChannelData(ch);
+    const windowSum = new Float32Array(length);
+
+    let inPos = 0;
+    let outPos = 0;
+
+    while (outPos + grainSize < length && inPos + grainSize * pitchFactor < length) {
+      for (let n = 0; n < grainSize; n++) {
+        const sampleIdx = inPos + n * pitchFactor;
+        if (sampleIdx < length - 1) {
+          const idx0 = Math.floor(sampleIdx);
+          const idx1 = idx0 + 1;
+          const frac = sampleIdx - idx0;
+          const s = inputData[idx0] * (1 - frac) + inputData[idx1] * frac;
+
+          const w = window[n];
+          outputData[outPos + n] += s * w;
+          windowSum[outPos + n] += w;
+        }
+      }
+      inPos += hopSize;
+      outPos += hopSize;
+    }
+
+    // Normalize window overlap gain
+    for (let i = 0; i < length; i++) {
+      if (windowSum[i] > 1e-4) {
+        outputData[i] /= windowSum[i];
+      }
+    }
+  }
+
+  return outputBuffer;
+}
+
 export class VoiceChangerEngine {
   private ctx: AudioContext | null = null;
 
@@ -826,6 +930,107 @@ export class VoiceChangerEngine {
 
   public init() {
     this.getAudioContext();
+    if (Tone.getContext().state === 'suspended') {
+      Tone.start();
+    }
+  }
+
+  /**
+   * Fish Audio Speech-to-Speech (STS) API Client
+   * Targets https://api.fish.audio for AI Voice Conversion.
+   * If network fails or API key is absent, logs cleanly and returns null to trigger local DSP fallback.
+   */
+  public async callFishAudioSTS(
+    audioBlob: Blob,
+    voiceModelId: string,
+    apiKeyOverride?: string
+  ): Promise<AudioBuffer | null> {
+    const key = apiKeyOverride || getFishAudioKey();
+
+    if (!key) {
+      console.info('[Fish Audio API] No API key provided (process.env.REACT_APP_FISH_AUDIO_KEY). Utilizing Web Audio + Tone.js Realism Engine.');
+      return null;
+    }
+
+    try {
+      console.log(`[Fish Audio API] Initiating STS Voice Conversion request for model: ${voiceModelId}`);
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'input_voice.webm');
+      formData.append('reference_id', voiceModelId || 'female_default');
+      formData.append('latency', 'normal');
+
+      const response = await fetch('https://api.fish.audio/v1/sts', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${key}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) {
+        throw new Error(`Fish Audio API responded with status ${response.status}: ${response.statusText}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const ctx = this.getAudioContext();
+      return await ctx.decodeAudioData(arrayBuffer);
+    } catch (error) {
+      console.warn('[Fish Audio API] STS Request encountered an error:', error);
+      console.info('[Fish Audio API] Seamlessly falling back to local Tone.js + Web Audio DSP Pipeline.');
+      return null;
+    }
+  }
+
+  /**
+   * Advanced Tone.js Post-Processing Realism Filter:
+   * Chaining Tone.js Nodes using Tone.Offline:
+   * 1. Low-Cut Highpass Filter (at 170Hz): Slices out deep resonant chest frequencies typical of male voice.
+   * 2. High-Shelf Brightness Filter (at 4000Hz with +5dB gain): Boosts crisp sibilance, air, and natural breathiness.
+   * 3. Micro-Room Reverb (roomSize: 0.12, wet: 0.08): Adds natural room acoustics, masking digital artifacts and dry mic feel.
+   */
+  public async applyToneJsRealismFilter(
+    inputBuffer: AudioBuffer,
+    highShelfGainDb: number = 5
+  ): Promise<AudioBuffer> {
+    const duration = inputBuffer.duration;
+    const sampleRate = inputBuffer.sampleRate;
+    const numChannels = inputBuffer.numberOfChannels;
+
+    const bufferTone = new Tone.ToneAudioBuffer(inputBuffer);
+
+    try {
+      const renderedToneBuffer = await Tone.Offline(async () => {
+        const player = new Tone.Player(bufferTone);
+
+        // Node 1: Low-Cut Highpass Filter at 170Hz
+        const highpass = new Tone.Filter({
+          frequency: 170,
+          type: 'highpass'
+        });
+
+        // Node 2: High-Shelf Brightness Filter at 4000Hz (+5dB gain)
+        const highshelf = new Tone.Filter({
+          frequency: 4000,
+          type: 'highshelf',
+          gain: highShelfGainDb
+        });
+
+        // Node 3: Micro-Room Reverb (roomSize: 0.12, wet: 0.08)
+        const reverb = new Tone.Freeverb({
+          roomSize: 0.12,
+          dampening: 3000,
+          wet: 0.08
+        });
+
+        player.chain(highpass, highshelf, reverb, Tone.getDestination());
+        player.start(0);
+      }, duration, numChannels, sampleRate);
+
+      return renderedToneBuffer.get() as AudioBuffer;
+    } catch (err) {
+      console.warn('[Tone.js Realism Filter] Offline rendering fallback:', err);
+      return inputBuffer;
+    }
   }
 
   // Generate Procedural Backing Beat Audio Buffer
@@ -847,7 +1052,6 @@ export class VoiceChangerEngine {
       let sampleR = 0;
 
       if (beatConfig.id === 'lofi_chill' || beatConfig.id === 'piano_meditation') {
-        // Soft Piano Chords + Lofi Kick & Snare
         const chordIndex = Math.floor(t / (secondsPerBeat * 2)) % 4;
         const freqs = [
           [261.63, 329.63, 392.00, 493.88], // Cmaj7
@@ -862,25 +1066,21 @@ export class VoiceChangerEngine {
           sampleR += Math.sin(2 * Math.PI * (f * 1.002) * t) * 0.08 * env;
         });
 
-        // Beat rhythm
         const beatPos = Math.floor(currentBeat);
         const subBeat = (currentBeat % 1);
         if (beatPos === 0 || beatPos === 4 || beatPos === 8 || beatPos === 12) {
-          // Kick
           const kickEnv = Math.exp(-subBeat * 15);
           const kickTone = Math.sin(2 * Math.PI * (60 * kickEnv) * t);
           sampleL += kickTone * 0.25 * kickEnv;
           sampleR += kickTone * 0.25 * kickEnv;
         }
         if (beatPos === 2 || beatPos === 6 || beatPos === 10 || beatPos === 14) {
-          // Soft Snare Noise
           const snareEnv = Math.exp(-subBeat * 20);
           const snareNoise = (Math.random() * 2 - 1) * 0.15 * snareEnv;
           sampleL += snareNoise;
           sampleR += snareNoise;
         }
       } else if (beatConfig.id === 'synthwave_80s') {
-        // Synthwave Bassline + Drums
         const bassFreq = [110, 97.99, 87.31, 97.99][Math.floor(t / (secondsPerBeat * 2)) % 4];
         const bassEnv = Math.exp(-((t % (secondsPerBeat / 2)) * 6));
         const bassSynth = Math.sin(2 * Math.PI * bassFreq * t) * 0.2 * bassEnv;
@@ -900,7 +1100,6 @@ export class VoiceChangerEngine {
           sampleR += (Math.random() * 2 - 1) * 0.25 * snareEnv;
         }
       } else {
-        // Acoustic / Trap Default
         const freq = 220 + Math.sin(t * 2) * 50;
         sampleL += Math.sin(2 * Math.PI * freq * t) * 0.05;
         sampleR += Math.sin(2 * Math.PI * freq * t) * 0.05;
@@ -913,86 +1112,65 @@ export class VoiceChangerEngine {
     return buffer;
   }
 
-  // Apply Full DSP Effects to AudioBuffer and return Processed AudioBuffer
+  /**
+   * Main Hybrid Voice Processing Engine:
+   * 1. Attempts Fish Audio Cloud AI Voice Conversion if key is configured and available.
+   * 2. Executes high-precision Web Audio OLA Granular Pitch Shift (preserving timing/speed without chipmunk speedup).
+   * 3. Applies multi-stage DSP filters (Ring Modulator, Formant Resonators, Equalizer, Delay, Reverb).
+   * 4. Passes output through the Tone.js Realism Filter Chain (170Hz Highpass, 4000Hz Brightness, Micro-Room Reverb).
+   * 5. Mixes backing instrumental beat if selected.
+   */
   public async processAudio(
     inputBuffer: AudioBuffer,
     preset: VoicePreset,
     customPitch?: number,
     backingBeatBuffer?: AudioBuffer | null,
-    backingBeatVolume: number = 0.4
+    backingBeatVolume: number = 0.4,
+    highShelfGain?: number
   ): Promise<AudioBuffer> {
     this.init();
 
     const finalPitchSemi = customPitch !== undefined ? customPitch : preset.pitchSemiTones;
-    const pitchFactor = Math.pow(2, finalPitchSemi / 12);
     const speedFactor = preset.speedRate || 1.0;
 
-    // Calculate target length based on speed & pitch factor
-    const targetLength = Math.floor(inputBuffer.length / (pitchFactor * speedFactor));
-    const sampleRate = inputBuffer.sampleRate;
+    // Attempt AI Cloud Voice Changer first
+    let aiConvertedBuffer: AudioBuffer | null = null;
+    try {
+      const wavBlob = this.bufferToWav(inputBuffer);
+      aiConvertedBuffer = await this.callFishAudioSTS(wavBlob, preset.id);
+    } catch {
+      // Fallback
+    }
+
+    // Use AI response buffer if available, otherwise apply Granular Pitch Shift
+    let processedBuffer = aiConvertedBuffer;
+    if (!processedBuffer) {
+      const ctx = this.getAudioContext();
+      processedBuffer = pitchShiftAudioBuffer(ctx, inputBuffer, finalPitchSemi);
+    }
+
+    // Calculate length without speeding up audio artificially
+    const sampleRate = processedBuffer.sampleRate;
+    const targetLength = Math.floor(processedBuffer.length / speedFactor);
 
     const offlineCtx = new OfflineAudioContext(2, Math.max(targetLength, sampleRate * 1), sampleRate);
 
     // Source Node
     const sourceNode = offlineCtx.createBufferSource();
-    sourceNode.buffer = inputBuffer;
-
-    // Apply speed rate factor to source
+    sourceNode.buffer = processedBuffer;
     sourceNode.playbackRate.setValueAtTime(speedFactor, offlineCtx.currentTime);
 
     let currentNode: AudioNode = sourceNode;
-
-    // Granular Delay Pitch Shifter (Shifts pitch independent of speed)
-    if (Math.abs(finalPitchSemi) > 0.01) {
-      const grainSize = 0.06; // 60ms grains
-      const pitchShift = pitchFactor; // e.g. 1.414 for +6 semitones
-      const modFreq = (1.0 - pitchShift) / grainSize;
-
-      const delayA = offlineCtx.createDelay();
-      const delayB = offlineCtx.createDelay();
-      delayA.delayTime.setValueAtTime(grainSize / 2, offlineCtx.currentTime);
-      delayB.delayTime.setValueAtTime(grainSize / 2, offlineCtx.currentTime);
-
-      const gainA = offlineCtx.createGain();
-      const gainB = offlineCtx.createGain();
-
-      // Sawtooth Modulators for Granular Delay Taps
-      const osc = offlineCtx.createOscillator();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(Math.abs(modFreq), offlineCtx.currentTime);
-
-      const oscGain = offlineCtx.createGain();
-      oscGain.gain.setValueAtTime((modFreq < 0 ? 1 : -1) * (grainSize / 2), offlineCtx.currentTime);
-
-      osc.connect(oscGain);
-      oscGain.connect(delayA.delayTime);
-      oscGain.connect(delayB.delayTime);
-
-      // Connect source to delay taps
-      currentNode.connect(delayA);
-      currentNode.connect(delayB);
-
-      delayA.connect(gainA);
-      delayB.connect(gainB);
-
-      const pitchMerger = offlineCtx.createGain();
-      gainA.connect(pitchMerger);
-      gainB.connect(pitchMerger);
-
-      osc.start(0);
-      currentNode = pitchMerger;
-    }
 
     // 1. Robot / Ring Modulation FX
     if (preset.robotMod) {
       const osc = offlineCtx.createOscillator();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(50, offlineCtx.currentTime); // 50 Hz carrier
+      osc.frequency.setValueAtTime(50, offlineCtx.currentTime);
 
       const modGain = offlineCtx.createGain();
       modGain.gain.setValueAtTime(0.5, offlineCtx.currentTime);
 
-      // Connect ring modulator carrier to gain node
       osc.connect(modGain.gain);
       osc.start(0);
 
@@ -1000,10 +1178,9 @@ export class VoiceChangerEngine {
       currentNode = modGain;
     }
 
-    // 2. Multi-band Formant Vocal Tract Resonator (F1, F2, F3)
+    // 2. Multi-band Formant Vocal Tract Resonators (F1, F2, F3)
     if (preset.formantShift !== 1.0) {
       const shift = preset.formantShift;
-      // F1 ~ 500Hz, F2 ~ 1500Hz, F3 ~ 2800Hz
       const formants = [
         { freq: 500 * shift, gain: (shift - 1.0) * 8, Q: 3 },
         { freq: 1500 * shift, gain: (shift - 1.0) * 10, Q: 3.5 },
@@ -1022,7 +1199,7 @@ export class VoiceChangerEngine {
       });
     }
 
-    // 3. Special Filters (Telephone, Megaphone, Underwater)
+    // 3. Filters (Telephone, Megaphone, Underwater)
     if (preset.telephoneFilter) {
       const hp = offlineCtx.createBiquadFilter();
       hp.type = 'highpass';
@@ -1063,7 +1240,7 @@ export class VoiceChangerEngine {
       currentNode = trebleFilter;
     }
 
-    // 5. Distortion / Overdrive
+    // 5. Distortion
     if (preset.distortion > 0) {
       const waveShaper = offlineCtx.createWaveShaper();
       const k = preset.distortion * 50;
@@ -1079,10 +1256,10 @@ export class VoiceChangerEngine {
       currentNode = waveShaper;
     }
 
-    // 6. Delay / Echo Node
+    // 6. Delay / Echo
     if (preset.delayLevel > 0) {
       const delayNode = offlineCtx.createDelay();
-      delayNode.delayTime.setValueAtTime(0.25, offlineCtx.currentTime); // 250ms echo
+      delayNode.delayTime.setValueAtTime(0.25, offlineCtx.currentTime);
 
       const delayFeedback = offlineCtx.createGain();
       delayFeedback.gain.setValueAtTime(preset.delayLevel * 0.6, offlineCtx.currentTime);
@@ -1095,14 +1272,13 @@ export class VoiceChangerEngine {
       delayFeedback.connect(delayNode);
       delayNode.connect(delayGainNode);
 
-      // Merge dry + wet delay
       const merger = offlineCtx.createGain();
       currentNode.connect(merger);
       delayGainNode.connect(merger);
       currentNode = merger;
     }
 
-    // 7. Reverb Simulation
+    // 7. Reverb
     if (preset.reverbLevel > 0) {
       const convolver = offlineCtx.createConvolver();
       convolver.buffer = this.createImpulseResponse(offlineCtx, 2.5, preset.reverbLevel * 3.0);
@@ -1119,13 +1295,12 @@ export class VoiceChangerEngine {
       currentNode = outputMerger;
     }
 
-    // Final Output Node for Voice
     const voiceGain = offlineCtx.createGain();
     voiceGain.gain.setValueAtTime(1.1, offlineCtx.currentTime);
     currentNode.connect(voiceGain);
     voiceGain.connect(offlineCtx.destination);
 
-    // 8. Backing Beat Track Overlay (Song Maker)
+    // 8. Backing Beat Overlay
     if (backingBeatBuffer) {
       const beatSource = offlineCtx.createBufferSource();
       beatSource.buffer = backingBeatBuffer;
@@ -1142,13 +1317,17 @@ export class VoiceChangerEngine {
 
     sourceNode.start(0);
 
-    return await offlineCtx.startRendering();
+    const dspRenderedBuffer = await offlineCtx.startRendering();
+
+    // 9. Apply Tone.js Realism Filter Chain (170Hz Low-Cut, 4000Hz High-Shelf Brightness, Micro-Room Reverb)
+    const shelfGain = highShelfGain !== undefined ? highShelfGain : preset.highShelfGain || 5;
+    return await this.applyToneJsRealismFilter(dspRenderedBuffer, shelfGain);
   }
 
   // Algorithmic Reverb Impulse Response Generator
   private createImpulseResponse(ctx: BaseAudioContext, duration: number, decay: number): AudioBuffer {
     const sampleRate = ctx.sampleRate;
-    const length = sampleRate * duration;
+    const length = Math.floor(sampleRate * duration);
     const impulse = ctx.createBuffer(2, length, sampleRate);
     const left = impulse.getChannelData(0);
     const right = impulse.getChannelData(1);
@@ -1188,7 +1367,6 @@ export class VoiceChangerEngine {
       pos += 4;
     }
 
-    // WAV Header
     writeString('RIFF');
     setUint32(length - 8);
     writeString('WAVE');
@@ -1220,9 +1398,8 @@ export class VoiceChangerEngine {
     return new Blob([out.buffer], { type: 'audio/wav' });
   }
 
-  // Export as Telegram Voice Format (.ogg or .webm opus file with voice metadata)
+  // Export as Telegram Voice Format (.ogg / .wav audio blob)
   public bufferToTelegramVoiceBlob(buffer: AudioBuffer): Blob {
-    // Generate standard audio file blob compatible with Telegram audio player & voice messages
     const wavBlob = this.bufferToWav(buffer);
     return new Blob([wavBlob], { type: 'audio/wav' });
   }
