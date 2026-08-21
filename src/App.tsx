@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BackgroundCanvas } from './components/BackgroundCanvas';
 import { Navbar } from './components/Navbar';
 import { MainView } from './components/MainView';
@@ -10,6 +10,16 @@ import { ambientEngine } from './utils/ambientAudio';
 
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
+
+  useEffect(() => {
+    const handleCustomTabChange = (e: any) => {
+      if (e.detail) {
+        setActiveTab(e.detail);
+      }
+    };
+    document.addEventListener('change-tab', handleCustomTabChange);
+    return () => document.removeEventListener('change-tab', handleCustomTabChange);
+  }, []);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(TOP_10_NOSTALGIC_TRACKS[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [ambientPlaying, setAmbientPlaying] = useState(false);

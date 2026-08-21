@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Sparkles, Compass, Timer,
-  Radio, Disc, Heart, Share2, Layers, Search
+  Sparkles, Compass, Timer, Mic,
+  Radio, Disc, Heart, Share2, Layers, Search, Zap
 } from 'lucide-react';
 import { CustomHamburgerButton } from './CustomHamburgerButton';
 import { CustomLogo } from './CustomLogo';
@@ -24,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const menuItems = [
     { id: 'home', label: 'Home & Top 10 Hits', icon: Disc, description: 'Curated soothing tracks & nostalgia' },
+    { id: 'voice-changer', label: 'Voice Changer Studio', icon: Mic, description: '20 Female & 20 FX Voices, Song Maker & TG Export' },
     { id: 'search', label: 'Real Music Search', icon: Compass, description: 'Search millions of tracks worldwide' },
     { id: 'mixer', label: 'Ambient Soundscape', icon: Radio, description: 'Water, wind, rain & birds generator' },
     { id: 'timer', label: 'Nostalgic Focus Timer', icon: Timer, description: 'Pomodoro timer with soft sounds' },
@@ -69,6 +70,18 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Action Controls */}
         <div className="flex items-center gap-2.5">
+          {/* Quick Voice Studio Button */}
+          <button
+            onClick={() => setActiveTab('voice-changer')}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold border transition-all duration-300 ${
+              activeTab === 'voice-changer'
+                ? 'bg-gradient-to-r from-purple-600 via-pink-600 to-indigo-600 text-white border-purple-300 shadow-lg shadow-purple-500/30'
+                : 'bg-purple-500/10 text-purple-200 border-purple-500/30 hover:bg-purple-500/20'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+            <span className="hidden sm:inline">Voice Studio</span>
+          </button>
           {/* Quick Search Shortcut */}
           <button
             onClick={() => setActiveTab('search')}

@@ -8,9 +8,10 @@ import {
 } from '../data/musicData';
 import {
   Play, Pause, Search, Sparkles, Music, Mic, Radio, Clock,
-  Headphones, RefreshCw, Tag, History, Info, X
+  Headphones, RefreshCw, Tag, History, Info, X, Zap
 } from 'lucide-react';
 import { AmbientSoundMixer } from './AmbientSoundMixer';
+import { VoiceChangerStudio } from './VoiceChangerStudio';
 
 interface MainViewProps {
   activeTab: string;
@@ -137,9 +138,17 @@ export const MainView: React.FC<MainViewProps> = ({
               <div className="pt-2 flex flex-wrap items-center gap-4">
                 <button
                   onClick={() => onSelectTrack(TOP_10_NOSTALGIC_TRACKS[0])}
-                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold shadow-xl shadow-purple-500/30 transition-all flex items-center gap-2.5 hover:scale-105 active:scale-95"
+                  className="px-6 py-3.5 rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold shadow-xl shadow-purple-500/30 transition-all flex items-center gap-2.5 hover:scale-105 active:scale-95 text-sm"
                 >
                   <Play className="w-5 h-5 fill-white" /> Listen Top 1 Track
+                </button>
+
+                {/* Voice Changer Quick Banner CTA */}
+                <button
+                  onClick={() => document.dispatchEvent(new CustomEvent('change-tab', { detail: 'voice-changer' }))}
+                  className="px-6 py-3.5 rounded-2xl bg-slate-900/80 hover:bg-slate-800 text-purple-200 border border-purple-400/40 font-semibold shadow-xl transition-all flex items-center gap-2.5 hover:scale-105 active:scale-95 text-sm"
+                >
+                  <Zap className="w-5 h-5 text-amber-300 animate-bounce" /> Open Voice Changer Studio
                 </button>
               </div>
             </div>
@@ -238,6 +247,17 @@ export const MainView: React.FC<MainViewProps> = ({
               })}
             </div>
           </div>
+        </motion.div>
+      )}
+
+      {/* 1.5 VOICE CHANGER STUDIO TAB */}
+      {activeTab === 'voice-changer' && (
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <VoiceChangerStudio />
         </motion.div>
       )}
 
